@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Payment Tracker</title>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <main class="shell">
+      <section class="topbar">
+        <div>
+          <p class="eyebrow">Stellar testnet</p>
+          <h1>Payment Tracker</h1>
+        </div>
+        <button id="connectWallet" class="primary">Connect wallet</button>
+      </section>
+
+      <section class="status-strip">
+        <div>
+          <span>Wallet</span>
+          <strong id="walletStatus">Not connected</strong>
+        </div>
+        <div>
+          <span>Contract</span>
+          <strong id="contractStatus">Configure address</strong>
+        </div>
+        <div>
+          <span>Transaction</span>
+          <strong id="txStatus">Idle</strong>
+        </div>
+      </section>
+
+      <section class="grid">
+        <form id="paymentForm" class="panel">
+          <div class="panel-heading">
+            <h2>Track a payment</h2>
+            <p>Write a payment request to the Soroban contract.</p>
+          </div>
+
+          <label>
+            Recipient address
+            <input id="recipient" required placeholder="G..." autocomplete="off" />
+          </label>
+
+          <label>
+            Amount (stroops)
+            <input id="amount" required type="number" min="1" step="1" value="10000000" />
+          </label>
+
+          <label>
+            Memo
+            <input id="memo" required maxlength="64" placeholder="July rent" />
+          </label>
+
+          <button class="primary" type="submit">Create payment</button>
+          <p id="formMessage" class="message" role="status"></p>
+        </form>
+
+        <section class="panel">
+          <div class="panel-heading">
+            <h2>Live payments</h2>
+            <p>Frontend state updates after successful writes and explorer polling.</p>
+          </div>
+          <div id="payments" class="payments"></div>
+        </section>
+      </section>
+    </main>
+
+    <dialog id="walletDialog">
+      <form method="dialog">
+        <div class="dialog-heading">
+          <h2>Choose wallet</h2>
+          <button value="cancel" aria-label="Close">x</button>
+        </div>
+        <div id="walletOptions" class="wallet-options"></div>
+      </form>
+    </dialog>
+
+    <script type="module" src="./src/app.js"></script>
+  </body>
+</html>
