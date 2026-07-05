@@ -4,19 +4,33 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Payment Tracker</title>
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%230f766e'/%3E%3Ctext x='50%25' y='56%25' text-anchor='middle' font-family='Arial,sans-serif' font-size='24' font-weight='700' fill='white'%3EPT%3C/text%3E%3C/svg%3E" />
     <link rel="stylesheet" href="./styles.css" />
   </head>
   <body>
+    <header class="site-header">
+      <a class="brand" href="./index.html" aria-label="Payment Tracker home">
+        <span class="brand-mark">PT</span>
+        <span>Payment Tracker</span>
+      </a>
+      <nav class="site-nav" aria-label="Primary navigation">
+        <a href="#paymentForm">Track</a>
+        <a href="#payments-section">Payments</a>
+        <a href="#status">Status</a>
+      </nav>
+    </header>
+
     <main class="shell">
       <section class="topbar">
         <div>
           <p class="eyebrow">Stellar testnet</p>
           <h1>Payment Tracker</h1>
+          <p class="hero-copy">Track Soroban payments with wallet signing, event sync, and transaction visibility.</p>
         </div>
         <button id="connectWallet" class="primary">Connect wallet</button>
       </section>
 
-      <section class="status-strip">
+      <section id="status" class="status-strip">
         <div>
           <span>Wallet</span>
           <strong id="walletStatus">Not connected</strong>
@@ -57,15 +71,20 @@
           <p id="formMessage" class="message" role="status"></p>
         </form>
 
-        <section class="panel">
+        <section id="payments-section" class="panel">
           <div class="panel-heading">
             <h2>Live payments</h2>
-            <p>Frontend state updates after successful writes and explorer polling.</p>
+            <p>Frontend state refreshes after successful writes and contract events.</p>
           </div>
           <div id="payments" class="payments"></div>
         </section>
       </section>
     </main>
+
+    <footer class="site-footer">
+      <p>Built for Stellar testnet Level 2</p>
+      <p>Multi-wallet payments, contract calls, event synchronization.</p>
+    </footer>
 
     <dialog id="walletDialog">
       <form method="dialog">
@@ -77,6 +96,7 @@
       </form>
     </dialog>
 
+    <script src="https://cdn.jsdelivr.net/npm/@stellar/stellar-sdk@13.1.0/dist/stellar-sdk.min.js"></script>
     <script type="module" src="./src/app.js"></script>
   </body>
 </html>

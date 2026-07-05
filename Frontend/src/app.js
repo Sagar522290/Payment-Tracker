@@ -1,34 +1,26 @@
-import {
-  StellarWalletsKit,
-  WalletNetwork,
-  allowAllModules,
-} from "https://esm.sh/@creit.tech/stellar-wallets-kit@1.7.6";
-import {
+const {
   Contract,
   Networks,
-  SorobanRpc,
+  rpc,
   TransactionBuilder,
   Address,
   nativeToScVal,
   scValToNative,
-} from "https://esm.sh/@stellar/stellar-sdk@13.1.0";
+} = window.StellarSdk;
 
 const CONTRACT_ID = "PASTE_DEPLOYED_TESTNET_CONTRACT_ID_HERE";
 const RPC_URL = "https://soroban-testnet.stellar.org";
 const EXPLORER_URL = "https://stellar.expert/explorer/testnet/tx";
+const hasContract = !CONTRACT_ID.includes("PASTE_");
 
-const kit = new StellarWalletsKit({
-  network: WalletNetwork.TESTNET,
-  selectedWalletId: "freighter",
-  modules: allowAllModules(),
-});
-
-const server = new SorobanRpc.Server(RPC_URL);
-const contract = new Contract(CONTRACT_ID);
+const server = new rpc.Server(RPC_URL);
+const contract = hasContract ? new Contract(CONTRACT_ID) : null;
 
 const state = {
   publicKey: "",
   payments: [],
+  lastEventLedger: 0,
+  eventTimer: null,
 };
 
 const els = {
@@ -65,6 +57,19 @@ function addressToScVal(publicKey) {
   return new Address(publicKey).toScVal();
 }
 
+function escapeHtml(value) {
+  return String(value).replace(/[&<>"']/g, (char) => {
+    const entities = {
+      "&": "&amp;",
+      "<": "&lt;",
+      ">": "&gt;",
+      '"': "&quot;",
+      "'": "&#39;",
+    };
+    return entities[char];
+  });
+}
+
 function handleWalletError(error) {
   const message = String(error?.message || error || "");
 
@@ -86,56 +91,109 @@ function handleWalletError(error) {
   setMessage(message || "Wallet action failed.", true);
 }
 
+function getFreighterApi() {
+  return window.freighterApi || window.freighter || null;
+}
+
+async function getFreighterAddress() {
+  const freighter = getFreighterApi();
+
+  if (!freighter) {
+    throw new Error("Freighter extension not found.");
+  }
+
+  if (typeof freighter.requestAccess === "function") {
+    const response = await freighter.requestAccess();
+    return response.address || response.publicKey || response;
+  }
+
+  if (typeof freighter.getAddress === "function") {
+    const response = await freighter.getAddress();
+    if (response.error) {
+      throw response.error;
+    }
+    return response.address || response.publicKey || response;
+  }
+
+  throw new Error("Freighter extension API is not available.");
+}
+
+async function signWithFreighter(xdr) {
+  const freighter = getFreighterApi();
+
+  if (!freighter || typeof freighter.signTransaction !== "function") {
+    throw new Error("Freighter cannot sign transactions.");
+  }
+
+  const response = await freighter.signTransaction(xdr, {
+    networkPassphrase: Networks.TESTNET,
+    address: state.publicKey,
+  });
+
+  if (response.error) {
+    throw response.error;
+  }
+
+  return response.signedTxXdr || response;
+}
+
 async function renderWalletOptions() {
-  const wallets = await kit.getSupportedWallets();
   els.walletOptions.replaceChildren();
 
-  wallets.forEach((wallet) => {
-    const button = document.createElement("button");
-    button.type = "button";
-    button.textContent = wallet.name;
-    button.addEventListener("click", async () => {
-      try {
-        await kit.setWallet(wallet.id);
-        const { address } = await kit.getAddress();
-        state.publicKey = address;
-        els.walletStatus.textContent = shortKey(address);
-        els.connectWallet.textContent = "Change wallet";
-        els.walletDialog.close();
-        setMessage("Wallet connected.");
-        await loadPayments();
-      } catch (error) {
-        handleWalletError(error);
+  const button = document.createElement("button");
+  button.type = "button";
+  button.textContent = "Freighter";
+  button.addEventListener("click", async () => {
+    try {
+      const address = await getFreighterAddress();
+
+      if (!address) {
+        throw new Error("Wallet did not return an address.");
       }
-    });
-    els.walletOptions.append(button);
+
+      state.publicKey = address;
+      els.walletStatus.textContent = shortKey(address);
+      els.connectWallet.textContent = "Change wallet";
+      els.walletDialog.close();
+      setMessage("Wallet connected.");
+      await loadPayments();
+      await startEventSync();
+    } catch (error) {
+      handleWalletError(error);
+    }
   });
+  els.walletOptions.append(button);
 }
 
 function renderPayments() {
   if (!state.payments.length) {
-    els.payments.innerHTML = "<p>No payments loaded yet.</p>";
+    els.payments.innerHTML = '<p class="empty-state">No payments loaded yet.</p>';
     return;
   }
 
   els.payments.innerHTML = state.payments
-    .map(
-      (payment) => `
+    .map((payment) => {
+      const memo = escapeHtml(payment.memo);
+      const to = escapeHtml(payment.to);
+      const amount = escapeHtml(payment.amount);
+      const status = escapeHtml(payment.status);
+
+      return `
         <article class="payment">
           <header>
-            <strong>${payment.memo}</strong>
-            <span class="badge">${payment.status}</span>
+            <strong>${memo}</strong>
+            <span class="badge">${status}</span>
           </header>
-          <p>To <span class="mono">${payment.to}</span></p>
-          <p>${payment.amount} stroops</p>
+          <p>To <span class="mono">${to}</span></p>
+          <p>${amount} stroops</p>
         </article>
-      `,
-    )
+      `;
+    })
     .join("");
 }
 
 async function callContract(method, args = []) {
-  if (CONTRACT_ID.includes("PASTE_")) {
+  if (!hasContract) {
     throw new Error("Add the deployed contract id in Frontend/src/app.js first.");
   }
 
@@ -153,9 +211,7 @@ async function callContract(method, args = []) {
     .build();
 
   tx = await server.prepareTransaction(tx);
-  const { signedTxXdr } = await kit.signTransaction(tx.toXDR(), {
-    networkPassphrase: Networks.TESTNET,
-  });
+  const signedTxXdr = await signWithFreighter(tx.toXDR());
 
   const signedTx = TransactionBuilder.fromXDR(signedTxXdr, Networks.TESTNET);
   const result = await server.sendTransaction(signedTx);
@@ -181,8 +237,60 @@ async function waitForTransaction(hash) {
   throw new Error("Transaction is still pending. Check Stellar Explorer.");
 }
 
+async function primeEventCursor() {
+  if (!hasContract) {
+    return;
+  }
+
+  const ledger = await server.getLatestLedger();
+  state.lastEventLedger = ledger.sequence;
+}
+
+async function syncFromContractEvents() {
+  if (!hasContract || !state.publicKey || !state.lastEventLedger) {
+    return;
+  }
+
+  const response = await server.getEvents({
+    startLedger: state.lastEventLedger,
+    filters: [
+      {
+        type: "contract",
+        contractIds: [CONTRACT_ID],
+      },
+    ],
+    pagination: {
+      limit: "10",
+    },
+  });
+
+  const events = response.events || [];
+  if (!events.length) {
+    return;
+  }
+
+  state.lastEventLedger = Math.max(...events.map((event) => Number(event.ledger || 0))) + 1;
+  await loadPayments();
+  setMessage("Payment list synchronized from contract events.");
+}
+
+async function startEventSync() {
+  if (state.eventTimer) {
+    clearInterval(state.eventTimer);
+  }
+
+  try {
+    await primeEventCursor();
+    state.eventTimer = setInterval(() => {
+      syncFromContractEvents().catch((error) => console.warn("Event sync failed", error));
+    }, 5000);
+  } catch (error) {
+    console.warn("Could not start event sync", error);
+  }
+}
+
 async function loadPayments() {
-  if (CONTRACT_ID.includes("PASTE_") || !state.publicKey) {
+  if (!hasContract || !state.publicKey) {
     renderPayments();
     return;
   }
@@ -208,8 +316,13 @@ async function loadPayments() {
 }
 
 els.connectWallet.addEventListener("click", async () => {
-  await renderWalletOptions();
   els.walletDialog.showModal();
+  try {
+    await renderWalletOptions();
+  } catch (error) {
+    els.walletOptions.replaceChildren();
+    handleWalletError(error);
+  }
 });
 
 els.paymentForm.addEventListener("submit", async (event) => {
@@ -218,6 +331,10 @@ els.paymentForm.addEventListener("submit", async (event) => {
   setMessage("");
 
   try {
+    if (!hasContract) {
+      throw new Error("Deploy the contract and add its id before creating payments.");
+    }
+
     const response = await callContract("create_payment", [
       addressToScVal(state.publicKey),
       addressToScVal(els.recipient.value),
@@ -233,6 +350,7 @@ els.paymentForm.addEventListener("submit", async (event) => {
     });
     renderPayments();
     setMessage(`Payment tracked. Hash: ${response.hash}`);
+    await syncFromContractEvents();
   } catch (error) {
     handleWalletError(error);
   } finally {
@@ -240,5 +358,5 @@ els.paymentForm.addEventListener("submit", async (event) => {
   }
 });
 
-els.contractStatus.textContent = CONTRACT_ID.includes("PASTE_") ? "Not deployed" : shortKey(CONTRACT_ID);
+els.contractStatus.textContent = hasContract ? shortKey(CONTRACT_ID) : "Not deployed";
 renderPayments();

@@ -8,11 +8,20 @@ Level 2 Stellar payment tracker with multi-wallet connection, Soroban contract c
 - Handles wallet not found, rejected request, and insufficient balance errors.
 - Soroban testnet contract for creating and listing payment records.
 - Frontend contract write and read paths.
+- Contract event polling that refreshes frontend state after new payment events.
 - Pending, success, and failed transaction status with Stellar Explorer links.
 
 ## Setup
 
-Open `Frontend/index.html` in a browser or deploy the `Frontend` folder to Netlify/Vercel as a static site.
+Run the frontend locally:
+
+```powershell
+cd Frontend
+npm.cmd install
+npm.cmd run dev
+```
+
+You can also deploy the `Frontend` folder to Netlify/Vercel as a static site.
 
 To build and deploy the contract:
 
@@ -28,6 +37,8 @@ After deployment, paste the contract id into `Frontend/src/app.js`:
 ```js
 const CONTRACT_ID = "YOUR_DEPLOYED_TESTNET_CONTRACT_ID";
 ```
+
+When a wallet is connected, the frontend polls testnet contract events every five seconds and reloads `list_payments` when a new contract event appears.
 
 ## Submission Values
 
