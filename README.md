@@ -1,10 +1,10 @@
 # Payment Tracker
 
-Level 2 Stellar payment tracker with multi-wallet connection, Soroban contract calls, transaction status tracking, and frontend state synchronization.
+Level 2 Stellar payment tracker with Freighter wallet connection, Soroban contract calls, transaction status tracking, and frontend state synchronization.
 
 ## Features
 
-- Multi-wallet connection through Stellar Wallets Kit.
+- Freighter wallet connection for Stellar testnet signing.
 - Handles wallet not found, rejected request, and insufficient balance errors.
 - Soroban testnet contract for creating and listing payment records.
 - Frontend contract write and read paths.
@@ -28,8 +28,8 @@ To build and deploy the contract:
 ```powershell
 cd Backend
 cargo test
-soroban contract build
-soroban contract deploy --wasm target/wasm32-unknown-unknown/release/payment_tracker.wasm --source YOUR_TESTNET_IDENTITY --network testnet
+stellar contract build
+stellar contract deploy --wasm target/wasm32-unknown-unknown/release/payment_tracker.wasm --source YOUR_TESTNET_IDENTITY --network testnet
 ```
 
 After deployment, paste the contract id into `Frontend/src/app.js`:
@@ -45,6 +45,15 @@ When a wallet is connected, the frontend polls testnet contract events every fiv
 - Live demo: optional, add your deployed URL here.
 - Deployed contract address: `PASTE_DEPLOYED_TESTNET_CONTRACT_ID_HERE`
 - Verifiable contract call transaction hash: `PASTE_SUCCESSFUL_TRANSACTION_HASH_HERE`
+
+## Requirement Status
+
+- Frontend builds successfully with Vite.
+- Wallet connection flow is implemented for Freighter.
+- Contract source and unit test are included.
+- Contract deployment is still required.
+- A real deployed contract id must be added to `Frontend/src/app.js`.
+- A successful testnet transaction hash is still required for submission.
 
 ## Screenshots
 

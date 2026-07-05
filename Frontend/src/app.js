@@ -1,4 +1,4 @@
-const {
+import {
   Contract,
   Networks,
   rpc,
@@ -6,7 +6,7 @@ const {
   Address,
   nativeToScVal,
   scValToNative,
-} = window.StellarSdk;
+} from "@stellar/stellar-sdk";
 
 const CONTRACT_ID = "PASTE_DEPLOYED_TESTNET_CONTRACT_ID_HERE";
 const RPC_URL = "https://soroban-testnet.stellar.org";
