@@ -47,7 +47,7 @@ When a wallet is connected, the frontend polls testnet contract events every fiv
 ## Submission Values
 
 - GitHub repository: `https://github.com/Sagar522290/Payment-Tracker`
-- Live demo: optional, add your deployed URL here.
+- Live demo: `https://payment-tracker-blush.vercel.app`
 - Deployed contract address: `REPLACE_WITH_DEPLOYED_TESTNET_CONTRACT_ID`
 - Verifiable contract call transaction hash: `REPLACE_WITH_SUCCESSFUL_TESTNET_TRANSACTION_HASH`
 

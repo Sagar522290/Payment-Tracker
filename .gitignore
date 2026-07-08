@@ -6,3 +6,5 @@ target/
 Backend/target/
 rustup-init.exe
 .chrome-screenshot*/
+Frontend/.vercel/
+Frontend/.env.local
