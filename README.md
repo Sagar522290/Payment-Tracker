@@ -46,9 +46,12 @@ When a wallet is connected, the frontend polls testnet contract events every fiv
 
 ## Submission Values
 
+- GitHub repository: `https://github.com/Sagar522290/Payment-Tracker`
 - Live demo: optional, add your deployed URL here.
-- Deployed contract address: `PASTE_DEPLOYED_TESTNET_CONTRACT_ID_HERE`
-- Verifiable contract call transaction hash: `PASTE_SUCCESSFUL_TRANSACTION_HASH_HERE`
+- Deployed contract address: `REPLACE_WITH_DEPLOYED_TESTNET_CONTRACT_ID`
+- Verifiable contract call transaction hash: `REPLACE_WITH_SUCCESSFUL_TESTNET_TRANSACTION_HASH`
+
+> Before final submission, replace the contract address and transaction hash above with real Stellar testnet values. They must be generated from your funded testnet wallet and verified on Stellar Expert.
 
 ## Requirement Checklist
 
@@ -58,17 +61,19 @@ When a wallet is connected, the frontend polls testnet contract events every fiv
 - Create and view payments: frontend saves local demo payments without a contract, then writes `create_payment` and reads `list_payments` after deployment.
 - Read/write contract data: implemented through Soroban RPC simulation and signed transactions.
 - Transaction status: Pending, Success, and Failed states are shown with Stellar Expert links.
-- Error handling: wallet not installed, rejected transaction, and insufficient balance are handled.
+- Error handling: wallet not installed, rejected wallet request, and insufficient balance/fee errors are handled.
 - Real-time updates: frontend refreshes from contract events after successful writes.
 - Responsive UI: layout adapts for mobile and desktop.
-- README: setup instructions are included; deployed address and transaction hash must be filled after real Testnet deployment.
+- Screenshot: wallet options screenshot is included below.
+- Commit history: repository has 2+ meaningful commits.
+- README: setup instructions are included; deployed address and transaction hash must be filled after real testnet deployment.
 
 ## Deployment Status
 
 - Frontend builds successfully with Vite.
 - Contract deployment still requires Rust/Cargo, Stellar CLI, and a funded Stellar testnet identity.
 - Before deployment, the frontend runs in Local mode so the payment form can still be tested.
-- After deployment, replace `PASTE_DEPLOYED_TESTNET_CONTRACT_ID_HERE` and `PASTE_SUCCESSFUL_TRANSACTION_HASH_HERE` above with real Testnet values.
+- After deployment, replace `REPLACE_WITH_DEPLOYED_TESTNET_CONTRACT_ID` and `REPLACE_WITH_SUCCESSFUL_TESTNET_TRANSACTION_HASH` above with real testnet values.
 
 ## Screenshots
 

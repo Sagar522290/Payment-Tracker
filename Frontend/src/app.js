@@ -146,11 +146,13 @@ function handleWalletError(error) {
   }
 
   if (/reject|denied|cancel/i.test(message)) {
+    setTxStatus("Failed");
     setMessage("Request rejected in the wallet.", true);
     return;
   }
 
   if (/insufficient|balance|fee/i.test(message)) {
+    setTxStatus("Failed");
     setMessage("Insufficient testnet balance for fees or the requested amount.", true);
     return;
   }
@@ -579,7 +581,7 @@ els.paymentForm.addEventListener("submit", async (event) => {
   } catch (error) {
     handleWalletError(error);
   } finally {
-    submitButton.disabled = !hasContract;
+    submitButton.disabled = false;
   }
 });
 
