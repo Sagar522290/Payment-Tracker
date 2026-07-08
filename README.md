@@ -1,12 +1,14 @@
 # Payment Tracker
 
-Level 2 Stellar payment tracker with Freighter wallet connection, Soroban contract calls, transaction status tracking, and frontend state synchronization.
+Level 2 Stellar payment tracker with Freighter and Albedo wallet connection, Soroban contract calls, transaction status tracking, and frontend state synchronization.
 
 ## Features
 
-- Freighter wallet connection for Stellar testnet signing.
+- Multi-wallet Stellar testnet signing with Freighter and Albedo.
+- Wallet selection popup.
 - Handles wallet not found, rejected request, and insufficient balance errors.
 - Soroban testnet contract for creating and listing payment records.
+- Contract stores payment sender, recipient, amount, memo, and status.
 - Frontend contract write and read paths.
 - Contract event polling that refreshes frontend state after new payment events.
 - Pending, success, and failed transaction status with Stellar Explorer links.
@@ -18,6 +20,8 @@ Run the frontend locally:
 ```powershell
 cd Frontend
 npm.cmd install
+Copy-Item .env.example .env
+npm.cmd run build
 npm.cmd run dev
 ```
 
@@ -32,10 +36,10 @@ stellar contract build
 stellar contract deploy --wasm target/wasm32-unknown-unknown/release/payment_tracker.wasm --source YOUR_TESTNET_IDENTITY --network testnet
 ```
 
-After deployment, paste the contract id into `Frontend/src/app.js`:
+After deployment, add the contract id to `Frontend/.env`:
 
-```js
-const CONTRACT_ID = "YOUR_DEPLOYED_TESTNET_CONTRACT_ID";
+```env
+VITE_CONTRACT_ID=YOUR_DEPLOYED_TESTNET_CONTRACT_ID
 ```
 
 When a wallet is connected, the frontend polls testnet contract events every five seconds and reloads `list_payments` when a new contract event appears.
@@ -46,18 +50,29 @@ When a wallet is connected, the frontend polls testnet contract events every fiv
 - Deployed contract address: `PASTE_DEPLOYED_TESTNET_CONTRACT_ID_HERE`
 - Verifiable contract call transaction hash: `PASTE_SUCCESSFUL_TRANSACTION_HASH_HERE`
 
-## Requirement Status
+## Requirement Checklist
+
+- Multi-wallet support: Freighter and Albedo are implemented.
+- Stellar Testnet smart contract: source is included in `Backend/contracts/payment-tracker`.
+- Contract status: shows Local mode until `VITE_CONTRACT_ID` is configured.
+- Create and view payments: frontend saves local demo payments without a contract, then writes `create_payment` and reads `list_payments` after deployment.
+- Read/write contract data: implemented through Soroban RPC simulation and signed transactions.
+- Transaction status: Pending, Success, and Failed states are shown with Stellar Expert links.
+- Error handling: wallet not installed, rejected transaction, and insufficient balance are handled.
+- Real-time updates: frontend refreshes from contract events after successful writes.
+- Responsive UI: layout adapts for mobile and desktop.
+- README: setup instructions are included; deployed address and transaction hash must be filled after real Testnet deployment.
+
+## Deployment Status
 
 - Frontend builds successfully with Vite.
-- Wallet connection flow is implemented for Freighter.
-- Contract source and unit test are included.
-- Contract deployment is still required.
-- A real deployed contract id must be added to `Frontend/src/app.js`.
-- A successful testnet transaction hash is still required for submission.
+- Contract deployment still requires Rust/Cargo, Stellar CLI, and a funded Stellar testnet identity.
+- Before deployment, the frontend runs in Local mode so the payment form can still be tested.
+- After deployment, replace `PASTE_DEPLOYED_TESTNET_CONTRACT_ID_HERE` and `PASTE_SUCCESSFUL_TRANSACTION_HASH_HERE` above with real Testnet values.
 
 ## Screenshots
 
-Add a screenshot of the wallet options dialog after clicking **Connect wallet**.
+![Wallet options dialog](screenshots/wallet-options.png)
 
 ## Notes
 
