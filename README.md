@@ -48,10 +48,10 @@ When a wallet is connected, the frontend polls testnet contract events every fiv
 
 - GitHub repository: `https://github.com/Sagar522290/Payment-Tracker`
 - Live demo: `https://payment-tracker-blush.vercel.app`
-- Deployed contract address: `REPLACE_WITH_DEPLOYED_TESTNET_CONTRACT_ID`
-- Verifiable contract call transaction hash: `REPLACE_WITH_SUCCESSFUL_TESTNET_TRANSACTION_HASH`
+- Deployed contract address: pending real Stellar testnet deployment
+- Verifiable contract call transaction hash: pending successful `create_payment` testnet transaction
 
-> Before final submission, replace the contract address and transaction hash above with real Stellar testnet values. They must be generated from your funded testnet wallet and verified on Stellar Expert.
+The contract source is complete, but no deployed Stellar testnet contract id or successful testnet transaction hash is committed to this repository yet. These two values must be generated from a funded Stellar testnet wallet and verified on Stellar Expert before final submission.
 
 ## Requirement Checklist
 
@@ -66,14 +66,14 @@ When a wallet is connected, the frontend polls testnet contract events every fiv
 - Responsive UI: layout adapts for mobile and desktop.
 - Screenshot: wallet options screenshot is included below.
 - Commit history: repository has 2+ meaningful commits.
-- README: setup instructions are included; deployed address and transaction hash must be filled after real testnet deployment.
+- README: setup instructions are included; deployment evidence section documents the missing real testnet contract id and transaction hash.
 
 ## Deployment Status
 
 - Frontend builds successfully with Vite.
 - Contract deployment still requires Rust/Cargo, Stellar CLI, and a funded Stellar testnet identity.
 - Before deployment, the frontend runs in Local mode so the payment form can still be tested.
-- After deployment, replace `REPLACE_WITH_DEPLOYED_TESTNET_CONTRACT_ID` and `REPLACE_WITH_SUCCESSFUL_TESTNET_TRANSACTION_HASH` above with real testnet values.
+- After deployment, update the submission values above with the real contract id and a successful testnet transaction hash.
 
 ## Screenshots
 
