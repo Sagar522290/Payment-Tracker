@@ -1,6 +1,8 @@
 import {
   Contract,
+  Asset,
   Networks,
+  Operation,
   rpc,
   TransactionBuilder,
   Address,
@@ -125,6 +127,13 @@ function escapeHtml(value) {
     };
     return entities[char];
   });
+}
+
+function stroopsToLumens(stroops) {
+  const value = BigInt(stroops);
+  const whole = value / 10000000n;
+  const fraction = (value % 10000000n).toString().padStart(7, "0").replace(/0+$/, "");
+  return fraction ? `${whole}.${fraction}` : whole.toString();
 }
 
 function handleWalletError(error) {
@@ -385,23 +394,22 @@ function renderPayments() {
     .join("");
 }
 
-async function callContract(method, args = []) {
-  if (!hasContract) {
-    throw new Error("Add the deployed contract id as VITE_CONTRACT_ID before creating payments.");
-  }
-
+async function buildAndSendTransaction(operations) {
   if (!state.publicKey) {
     throw new Error("Connect a wallet first.");
   }
 
   const account = await server.getAccount(state.publicKey);
-  let tx = new TransactionBuilder(account, {
+  let transaction = new TransactionBuilder(account, {
     fee: "100000",
     networkPassphrase: Networks.TESTNET,
-  })
-    .addOperation(contract.call(method, ...args))
-    .setTimeout(30)
-    .build();
+  });
+
+  operations.forEach((operation) => {
+    transaction = transaction.addOperation(operation);
+  });
+
+  let tx = transaction.setTimeout(30).build();
 
   tx = await server.prepareTransaction(tx);
   const signedTxXdr = await signWithSelectedWallet(tx.toXDR());
@@ -409,6 +417,24 @@ async function callContract(method, args = []) {
   const signedTx = TransactionBuilder.fromXDR(signedTxXdr, Networks.TESTNET);
   const result = await server.sendTransaction(signedTx);
   return waitForTransaction(result.hash);
+}
+
+async function callContract(method, args = []) {
+  if (!hasContract) {
+    throw new Error("Add the deployed contract id before using contract tracking.");
+  }
+
+  return buildAndSendTransaction([contract.call(method, ...args)]);
+}
+
+async function sendTrackedPayment(destination, amount) {
+  return buildAndSendTransaction([
+    Operation.payment({
+      destination,
+      asset: Asset.native(),
+      amount: stroopsToLumens(amount),
+    }),
+  ]);
 }
 
 async function waitForTransaction(hash) {
@@ -545,12 +571,21 @@ els.paymentForm.addEventListener("submit", async (event) => {
   setMessage("");
 
   try {
+    if (!state.publicKey) {
+      els.walletDialog.showModal();
+      await renderWalletOptions();
+      setMessage("Choose a wallet first, then submit the payment again.", true);
+      return;
+    }
+
     if (!hasContract) {
+      const response = await sendTrackedPayment(els.recipient.value, els.amount.value);
       const payment = {
         to: els.recipient.value,
         amount: els.amount.value,
         memo: els.memo.value,
-        status: "local",
+        status: "sent",
+        hash: response.hash,
       };
 
       state.payments = [payment, ...readLocalPayments()];
@@ -558,10 +593,11 @@ els.paymentForm.addEventListener("submit", async (event) => {
       renderPayments();
       els.paymentForm.reset();
       els.amount.value = "10000000";
-      setMessage("Payment saved locally. Add VITE_CONTRACT_ID to write it to Stellar testnet.");
+      setMessage(`Payment sent. Hash: ${response.hash}`);
       return;
     }
 
+    const transferResponse = await sendTrackedPayment(els.recipient.value, els.amount.value);
     const response = await callContract("create_payment", [
       addressToScVal(state.publicKey),
       addressToScVal(els.recipient.value),
@@ -576,7 +612,7 @@ els.paymentForm.addEventListener("submit", async (event) => {
       status: "created",
     });
     renderPayments();
-    setMessage(`Payment tracked. Hash: ${response.hash}`);
+    setMessage(`Payment sent and tracked. Transfer: ${transferResponse.hash}`);
     await syncFromContractEvents();
   } catch (error) {
     handleWalletError(error);
@@ -585,9 +621,9 @@ els.paymentForm.addEventListener("submit", async (event) => {
   }
 });
 
-els.contractStatus.textContent = hasContract ? shortKey(CONTRACT_ID) : "Local mode";
+els.contractStatus.textContent = hasContract ? shortKey(CONTRACT_ID) : "Direct transfer mode";
 if (!hasContract) {
-  setMessage("Local mode active. Add VITE_CONTRACT_ID when you are ready to write to Stellar testnet.");
+  setMessage("Direct transfer mode. Payments are sent on-chain; add VITE_CONTRACT_ID for contract tracking.");
 }
 renderPayments();
 
