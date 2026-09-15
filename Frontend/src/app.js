@@ -1,6 +1,6 @@
 import {
   Contract,
-  Asset,
+  Horizon,
   Networks,
   Operation,
   rpc,
@@ -17,6 +17,7 @@ import {
 
 const CONTRACT_ID = import.meta.env.VITE_CONTRACT_ID || "PASTE_DEPLOYED_TESTNET_CONTRACT_ID_HERE";
 const RPC_URL = "https://soroban-testnet.stellar.org";
+const HORIZON_URL = "https://horizon-testnet.stellar.org";
 const EXPLORER_URL = "https://stellar.expert/explorer/testnet/tx";
 const FREIGHTER_INSTALL_URL = "https://www.freighter.app/";
 const ALBEDO_SCRIPT_URL = "https://albedo.link/intent/lib/albedo.intent.js";
@@ -25,6 +26,7 @@ const hasContract = !CONTRACT_PLACEHOLDER_PATTERN.test(CONTRACT_ID);
 const LOCAL_PAYMENTS_KEY = "payment-tracker.local-payments";
 
 const server = new rpc.Server(RPC_URL);
+const horizonServer = new Horizon.Server(HORIZON_URL);
 const contract = hasContract ? new Contract(CONTRACT_ID) : null;
 
 const state = {
@@ -428,13 +430,31 @@ async function callContract(method, args = []) {
 }
 
 async function sendTrackedPayment(destination, amount) {
-  return buildAndSendTransaction([
-    Operation.payment({
-      destination,
-      asset: Asset.native(),
-      amount: stroopsToLumens(amount),
-    }),
-  ]);
+  if (!state.publicKey) {
+    throw new Error("Connect a wallet first.");
+  }
+
+  const account = await horizonServer.loadAccount(state.publicKey);
+  const transaction = new TransactionBuilder(account, {
+    fee: "100000",
+    networkPassphrase: Networks.TESTNET,
+  })
+    .addOperation(
+      Operation.payment({
+        destination,
+        asset: Asset.native(),
+        amount: stroopsToLumens(amount),
+      }),
+    )
+    .setTimeout(30)
+    .build();
+
+  const signedTxXdr = await signWithSelectedWallet(transaction.toXDR());
+  const signedTx = TransactionBuilder.fromXDR(signedTxXdr, Networks.TESTNET);
+  const response = await horizonServer.submitTransaction(signedTx);
+
+  setTxStatus("Success", response.hash);
+  return response;
 }
 
 async function waitForTransaction(hash) {
