@@ -1,5 +1,6 @@
 import {
   Contract,
+  Asset,
   Horizon,
   Networks,
   Operation,
